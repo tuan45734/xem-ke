@@ -242,20 +242,8 @@ const dataManager = {
         }
     },
 
-    // Xuất dữ liệu
-    exportData() {
-        const dataStr = JSON.stringify(filteredData, null, 2);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `du_lieu_da_loc_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    },
+   
+   
 
     // Hiển thị lỗi
     showError(message) {
@@ -299,10 +287,7 @@ elements.lastPage.addEventListener('click', () => {
     dataManager.setupPagination();
 });
 
-// Sự kiện xuất dữ liệu
-elements.exportBtn.addEventListener('click', () => {
-    dataManager.exportData();
-});
+
 
 // Sự kiện bộ lọc với debounce
 const debouncedFilter = utils.debounce(() => {
