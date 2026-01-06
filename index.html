@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng Dữ liệu với Bộ Lọc</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .filters-container {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .filter-input {
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.15s ease-in-out;
+        }
+        
+        .filter-input:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .stats-bar {
+            background: #e8f4fc;
+            padding: 12px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 1000px;
+        }
+        
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th {
+            background: #4a6baf;
+            color: white;
+            font-weight: 600;
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 2px solid #3a5a9f;
+            white-space: nowrap;
+        }
+        
+        th:hover {
+            background: #3a5a9f;
+        }
+        
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eaeaea;
+            vertical-align: top;
+        }
+        
+        tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        
+        tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:nth-child(even):hover {
+            background-color: #f0f2ff;
+        }
+        
+        .doanh-so-cell {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            color: #27ae60;
+        }
+        
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            font-size: 16px;
+            color: #667eea;
+            display: none;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .pagination {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pagination-info {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .pagination-btn {
+            padding: 8px 16px;
+            border: 1px solid #ced4da;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .export-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .export-btn:hover {
+            background: #218838;
+        }
+        
+        @media (max-width: 768px) {
+            .filter-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-bar, .pagination {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Quản lý Dữ liệu Khách hàng</h1>
+            <div class="subtitle">Bộ lọc theo Tên nhóm, Tên và Mã</div>
+        </header>
+        
+        <div class="filters-container">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-ten-nhom">Tên nhóm</label>
+                    <input type="text" 
+                           id="filter-ten-nhom" 
+                           class="filter-input" 
+                           placeholder="Nhập tên nhóm để lọc...">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-ten">Tên</label>
+                    <input type="text" 
+                           id="filter-ten" 
+                           class="filter-input" 
+                           placeholder="Nhập tên để lọc...">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label" for="filter-ma">Mã</label>
+                    <input type="text" 
+                           id="filter-ma" 
+                           class="filter-input" 
+                           placeholder="Nhập mã để lọc...">
+                </div>
+            </div>
+        </div>
+        
+        <div class="stats-bar">
+            <div>Tổng số bản ghi: <span id="total-records">0</span></div>
+            <div>Đang hiển thị: <span id="filtered-records">0</span> bản ghi</div>
+            <div>Tìm thấy: <span id="search-results">0</span> kết quả</div>
+        </div>
+        
+        <div class="table-container">
+            <div class="loading-overlay" id="loading-overlay">
+                <div class="loading-spinner"></div>
+                <span>Đang tải dữ liệu...</span>
+            </div>
+            
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Tên nhóm</th>
+                        <th>Mã</th>
+                        <th>Tên</th>
+                        <th>Mã KH</th>
+                        <th>Tên KH</th>
+                        <th>Địa chỉ</th>
+                        <th>Doanh số</th>
+                        <th>Ngày Upload</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Dữ liệu sẽ được tải động -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="pagination">
+            <div class="pagination-info">
+                Trang <span id="current-page">1</span> / <span id="total-pages">1</span>
+            </div>
+            
+            <div class="pagination-controls">
+                <button id="first-page" class="pagination-btn" disabled>« Đầu</button>
+                <button id="prev-page" class="pagination-btn" disabled>‹ Trước</button>
+                <div id="page-numbers"></div>
+                <button id="next-page" class="pagination-btn">Sau ›</button>
+                <button id="last-page" class="pagination-btn">Cuối »</button>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
