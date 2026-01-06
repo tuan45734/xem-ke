@@ -2,7 +2,7 @@
 const CONFIG = {
     ITEMS_PER_PAGE: 10,
     DEBOUNCE_DELAY: 300,
-    DATA_URL: 'data.json'
+    DATA_URL: './data.json'  
 };
 
 // Biến toàn cục
